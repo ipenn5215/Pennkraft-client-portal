@@ -1,3 +1,5 @@
+import { Project, EstimateRequest } from './index';
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -275,4 +277,14 @@ export interface Risk {
   mitigation: string;
   owner: string;
   status: 'identified' | 'monitoring' | 'mitigated' | 'closed';
+}
+
+export interface KPICard {
+  title: string;
+  value: string | number;
+  change?: number;
+  changeType?: 'increase' | 'decrease' | 'neutral';
+  icon?: string;
+  color?: string;
+  subtitle?: string;
 }
