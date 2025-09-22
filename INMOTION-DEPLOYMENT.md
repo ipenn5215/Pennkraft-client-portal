@@ -4,12 +4,14 @@ This guide is specifically configured for your InMotion Hosting cPanel account.
 
 ## 🔑 Your Account Information
 
-- **Domain**: pennkraft.com (with inmotionestimating.com)
+- **Domain**: www.pennkraft.com
 - **cPanel Username**: admin@inmotionestimating.com
 - **Contact Email**: ipenn@pennkraft.com
 - **Home Directory**: /home/inmoti87/
+- **Public HTML**: /home/inmoti87/pennkraft.com/public_html/
 - **Application Directory**: /home/inmoti87/pennkraft.com/repositories/Pennkraft-client-portal/
 - **Git Repository**: /home/inmoti87/pennkraft.com/repositories/Pennkraft-client-portal
+- **Portal URL**: https://www.pennkraft.com/portal
 
 ## 📋 Pre-Deployment Checklist
 

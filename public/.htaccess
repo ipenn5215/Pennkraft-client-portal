@@ -1,0 +1,33 @@
+# .htaccess for Pennkraft Portal
+# Place this in: /home/inmoti87/pennkraft.com/public_html/.htaccess
+
+RewriteEngine On
+
+# Force www and HTTPS
+RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTP_HOST} !^www\. [NC]
+RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
+RewriteRule ^ https://www.%1%{REQUEST_URI} [L,R=301]
+
+# Proxy /portal requests to Node.js application
+# The Node.js app runs on a port assigned by cPanel (usually dynamic)
+RewriteCond %{REQUEST_URI} ^/portal(/.*)?$ [NC]
+RewriteRule ^portal(/.*)?$ http://127.0.0.1:30000/$1 [P,L]
+
+# Handle /portal static assets (if Next.js is serving from /portal/_next)
+RewriteCond %{REQUEST_URI} ^/portal/_next [NC]
+RewriteRule ^portal/_next/(.*)$ http://127.0.0.1:30000/_next/$1 [P,L]
+
+# Handle /portal API routes
+RewriteCond %{REQUEST_URI} ^/portal/api [NC]
+RewriteRule ^portal/api/(.*)$ http://127.0.0.1:30000/api/$1 [P,L]
+
+# Existing website files (non-portal requests)
+# Let Apache handle regular files that exist
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# If no file exists and not /portal, serve index.html (for main site)
+RewriteCond %{REQUEST_URI} !^/portal [NC]
+RewriteRule ^(.*)$ index.html [L]
