@@ -14,7 +14,11 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "deploy": "git push origin main",
+    "deploy:setup": "chmod +x scripts/*.sh && echo 'Deployment scripts ready'",
+    "deploy:test": "./scripts/build-on-server.sh",
+    "deploy:webhook": "echo 'Set GitHub webhook to: https://pennkraft.com/deploy-webhook.php'"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
