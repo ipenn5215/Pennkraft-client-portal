@@ -5,6 +5,7 @@ node_modules
 .env.local
 .env.production
 .env.development
+.env.server
 
 # Prisma
 /src/generated/prisma

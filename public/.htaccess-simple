@@ -1,0 +1,14 @@
+# Simple .htaccess for Pennkraft Portal
+# Place this in: /home/inmoti87/pennkraft.com/public_html/.htaccess
+
+RewriteEngine On
+
+# Proxy /portal requests to Node.js application
+# IMPORTANT: Replace PORT_NUMBER with your actual Node.js port from cPanel
+RewriteCond %{REQUEST_URI} ^/portal [NC]
+RewriteRule ^portal/?(.*)$ http://127.0.0.1:PORT_NUMBER/$1 [P,L]
+
+# Handle existing files
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]

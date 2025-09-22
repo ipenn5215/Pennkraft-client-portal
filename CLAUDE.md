@@ -470,6 +470,69 @@ STRIPE_SECRET_KEY=""
 STRIPE_WEBHOOK_SECRET=""
 ```
 
+## Deployment & Server Access
+
+### Server Configuration
+- **Production URL**: https://app.pennkraft.com (subdomain for portal)
+- **Main Site**: https://www.pennkraft.com (marketing site)
+- **Host**: InMotion Hosting (cPanel)
+- **Server IP**: 144.208.71.134
+- **Node.js Version**: 24 (located at `/opt/alt/alt-nodejs24/root/usr/bin`)
+
+### SSH Access
+SSH credentials are stored in `.env.server` (not committed to Git). To connect:
+```bash
+ssh -i ~/.ssh/pennkraft_key inmoti87@pennkraft.com -p 22
+# Or using IP
+ssh -i ~/.ssh/pennkraft_key inmoti87@144.208.71.134 -p 22
+```
+
+### Server Paths
+```bash
+# Application repository
+/home/inmoti87/pennkraft.com/repositories/Pennkraft-client-portal
+
+# Subdomain document root
+/home/inmoti87/app.pennkraft.com/public_html
+
+# Main site document root
+/home/inmoti87/pennkraft.com/public_html
+
+# Node.js 24 binary
+/opt/alt/alt-nodejs24/root/usr/bin/node
+```
+
+### Deployment Process
+1. **Push to GitHub**: Changes automatically trigger deployment via webhook
+2. **Manual Deployment**:
+   ```bash
+   ssh inmoti87@pennkraft.com
+   cd /home/inmoti87/pennkraft.com/repositories/Pennkraft-client-portal
+   git pull origin main
+   npm install
+   npm run build
+   # Restart Node.js app in cPanel
+   ```
+
+### Environment Files
+- `.env.production` - Production environment variables (app URLs, database, auth)
+- `.env.server` - Server access credentials (SSH, cPanel, paths) - DO NOT COMMIT
+- `.env.local` - Local development overrides
+
+### Database
+Currently configured for PostgreSQL on InMotion:
+- Host: localhost
+- Port: 5432
+- Database: inmoti87_portal
+- User: inmoti87_pennkraft
+
+### cPanel Management
+1. **Node.js App**: Software → Setup Node.js App
+2. **Subdomain**: Domains → Subdomains → app.pennkraft.com
+3. **Database**: Databases → PostgreSQL Databases
+4. **File Manager**: Files → File Manager
+5. **Terminal**: Advanced → Terminal
+
 ## Support & Documentation
 
 - Next.js: https://nextjs.org/docs
