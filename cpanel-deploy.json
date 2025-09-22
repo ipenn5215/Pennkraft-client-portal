@@ -1,0 +1,91 @@
+{
+  "name": "pennkraft-client-portal",
+  "description": "Pennkraft Estimating Client Portal - Next.js Application",
+  "version": "1.0.0",
+  "deployment": {
+    "type": "nodejs",
+    "nodeVersion": "20.x",
+    "applicationRoot": "/home/username/pennkraft-portal",
+    "publicRoot": "/home/username/public_html/portal",
+    "startupFile": "npm start",
+    "environment": "production"
+  },
+  "database": {
+    "type": "postgresql",
+    "host": "localhost",
+    "port": 5432,
+    "name": "pennkraf_portal",
+    "migrations": "prisma/migrations"
+  },
+  "build": {
+    "commands": [
+      "npm ci --production=false",
+      "npx prisma generate --schema=./prisma/schema-postgres.prisma",
+      "npm run build",
+      "npm prune --production"
+    ],
+    "output": ".next"
+  },
+  "files": {
+    "include": [
+      ".next/**",
+      "public/**",
+      "prisma/schema-postgres.prisma",
+      "package.json",
+      "package-lock.json",
+      "next.config.js"
+    ],
+    "exclude": [
+      "node_modules/**",
+      ".git/**",
+      ".env.local",
+      "*.log",
+      ".DS_Store",
+      "src/**",
+      "*.md",
+      ".github/**"
+    ]
+  },
+  "scripts": {
+    "preInstall": "echo 'Setting up Node.js application...'",
+    "postInstall": "npx prisma generate --schema=./prisma/schema-postgres.prisma",
+    "preStart": "npx prisma migrate deploy --schema=./prisma/schema-postgres.prisma",
+    "start": "NODE_ENV=production npm start"
+  },
+  "environmentVariables": {
+    "NODE_ENV": "production",
+    "PORT": "DYNAMIC_FROM_CPANEL",
+    "DATABASE_URL": "POSTGRES_CONNECTION_STRING",
+    "NEXTAUTH_URL": "https://yourdomain.com/portal",
+    "NEXTAUTH_SECRET": "GENERATE_SECURE_SECRET"
+  },
+  "cpanel": {
+    "setupInstructions": [
+      "1. Login to cPanel",
+      "2. Navigate to 'Software' > 'Setup Node.js App'",
+      "3. Click 'CREATE APPLICATION'",
+      "4. Configure:",
+      "   - Node.js version: 20.x",
+      "   - Application mode: Production",
+      "   - Application root: /home/username/pennkraft-portal",
+      "   - Application URL: portal",
+      "   - Application startup file: npm start",
+      "5. Add environment variables from .env.production",
+      "6. Click 'CREATE'",
+      "7. Run 'NPM Install' button",
+      "8. Start the application"
+    ],
+    "postgresSetup": [
+      "1. In cPanel, go to 'Databases' > 'PostgreSQL Databases'",
+      "2. Create new database: 'pennkraf_portal'",
+      "3. Create new user: 'pennkraf_user'",
+      "4. Add user to database with ALL privileges",
+      "5. Note the connection details for DATABASE_URL"
+    ],
+    "maintenance": {
+      "restart": "Touch the restart.txt file in application root",
+      "logs": "Check ~/nodelogs/pennkraft-portal/ for application logs",
+      "updates": "Use Git deployment or FTP to update files"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "host": "inmotionestimating.com",
+  "port": 21,
+  "username": "admin@inmotionestimating.com",
+  "password": "YOUR_FTP_PASSWORD_HERE",
+  "localRoot": "./deploy-package",
+  "remoteRoot": "/home/inmoti87/pennkraft.com/portal",
+  "include": [
+    ".next/**",
+    "public/**",
+    "prisma/schema-postgres.prisma",
+    "package.json",
+    "package-lock.json",
+    "next.config.js",
+    "start.sh"
+  ],
+  "exclude": [
+    "node_modules/**",
+    ".git/**",
+    "*.log",
+    ".env*",
+    "src/**",
+    "*.md",
+    ".github/**",
+    "scripts/**",
+    "deploy-package/**"
+  ],
+  "deleteRemote": false,
+  "forcePasv": true,
+  "sftp": false
+}
