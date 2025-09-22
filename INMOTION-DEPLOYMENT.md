@@ -8,7 +8,7 @@ This guide is specifically configured for your InMotion Hosting cPanel account.
 - **cPanel Username**: admin@inmotionestimating.com
 - **Contact Email**: ipenn@pennkraft.com
 - **Home Directory**: /home/inmoti87/
-- **Portal Directory**: /home/inmoti87/pennkraft.com/portal/
+- **Application Directory**: /home/inmoti87/pennkraft.com/repositories/Pennkraft-client-portal/
 - **Git Repository**: /home/inmoti87/pennkraft.com/repositories/Pennkraft-client-portal
 
 ## 📋 Pre-Deployment Checklist
@@ -44,7 +44,7 @@ postgresql://inmoti87_pennkraft:[YOUR_DB_PASSWORD]@localhost:5432/inmoti87_porta
 1. **Create Application**:
    - Node.js version: `20.x` (or highest available)
    - Application mode: `Production`
-   - Application root: `/home/inmoti87/pennkraft.com/portal`
+   - Application root: `/home/inmoti87/pennkraft.com/repositories/Pennkraft-client-portal`
    - Application URL: `portal` (for pennkraft.com/portal)
    - Application startup file: `npm start`
 
