@@ -1,0 +1,204 @@
+// This is your Prisma schema file for PostgreSQL (Production)
+// Use this when deploying to Supabase or other PostgreSQL databases
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - extends auth users
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String   // Hashed password
+  fullName    String   @map("full_name")
+  company     String?
+  phone       String?
+  role        UserRole @default(CUSTOMER)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  projects      Project[]
+  estimates     Estimate[]
+  media         Media[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER @map("customer")
+  ADMIN    @map("admin")
+
+  @@map("user_role")
+}
+
+// Projects model
+model Project {
+  id             String        @id @default(cuid())
+  userId         String        @map("user_id")
+  title          String
+  description    String?
+  type           ProjectType
+  status         ProjectStatus @default(PENDING)
+  estimatedValue Decimal?      @map("estimated_value") @db.Decimal(10, 2)
+  actualValue    Decimal?      @map("actual_value") @db.Decimal(10, 2)
+  startDate      DateTime?     @map("start_date")
+  endDate        DateTime?     @map("end_date")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  estimates Estimate[]
+  media     Media[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("projects")
+}
+
+enum ProjectType {
+  PAINTING  @map("painting")
+  TILE      @map("tile")
+  FLOORING  @map("flooring")
+  DRYWALL   @map("drywall")
+  GLASS     @map("glass")
+  OTHER     @map("other")
+
+  @@map("project_type")
+}
+
+enum ProjectStatus {
+  PENDING      @map("pending")
+  IN_PROGRESS  @map("in-progress")
+  COMPLETED    @map("completed")
+  CANCELLED    @map("cancelled")
+
+  @@map("project_status")
+}
+
+// Estimates model
+model Estimate {
+  id          String         @id @default(cuid())
+  projectId   String?        @map("project_id")
+  userId      String         @map("user_id")
+  title       String
+  description String?
+  items       Json           @default("[]")
+  subtotal    Decimal        @db.Decimal(10, 2)
+  taxRate     Decimal        @default(0.0875) @map("tax_rate") @db.Decimal(5, 4)
+  taxAmount   Decimal        @map("tax_amount") @db.Decimal(10, 2)
+  total       Decimal        @db.Decimal(10, 2)
+  status      EstimateStatus @default(DRAFT)
+  validUntil  DateTime?      @map("valid_until")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+  @@map("estimates")
+}
+
+enum EstimateStatus {
+  DRAFT    @map("draft")
+  SENT     @map("sent")
+  VIEWED   @map("viewed")
+  ACCEPTED @map("accepted")
+  REJECTED @map("rejected")
+
+  @@map("estimate_status")
+}
+
+// Media model for gallery
+model Media {
+  id            String    @id @default(cuid())
+  userId        String?   @map("user_id")
+  projectId     String?   @map("project_id")
+  type          MediaType
+  url           String
+  thumbnailUrl  String?   @map("thumbnail_url")
+  title         String
+  description   String?
+  category      String?
+  isPublic      Boolean   @default(false) @map("is_public")
+  isProtected   Boolean   @default(true) @map("is_protected")
+  metadata      Json?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([isPublic])
+  @@map("media")
+}
+
+enum MediaType {
+  IMAGE @map("image")
+  VIDEO @map("video")
+
+  @@map("media_type")
+}
+
+// Notifications model
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String           @map("user_id")
+  type       NotificationType
+  title      String
+  message    String
+  actionUrl  String?          @map("action_url")
+  actionText String?          @map("action_text")
+  isRead     Boolean          @default(false) @map("is_read")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  INFO    @map("info")
+  SUCCESS @map("success")
+  WARNING @map("warning")
+  URGENT  @map("urgent")
+
+  @@map("notification_type")
+}
+
+// Activity log for auditing
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("activity_log")
+}

@@ -1,0 +1,151 @@
+// This is your Prisma schema file for SQLite development
+// Use this for local development without Docker
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// User model - extends auth users
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String   // Hashed password
+  fullName    String   @map("full_name")
+  company     String?
+  phone       String?
+  role        String   @default("CUSTOMER")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  projects      Project[]
+  estimates     Estimate[]
+  media         Media[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+
+  @@map("users")
+}
+
+// Projects model
+model Project {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  title          String
+  description    String?
+  type           String
+  status         String   @default("PENDING")
+  estimatedValue Float?   @map("estimated_value")
+  actualValue    Float?   @map("actual_value")
+  startDate      DateTime? @map("start_date")
+  endDate        DateTime? @map("end_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  estimates Estimate[]
+  media     Media[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("projects")
+}
+
+// Estimates model
+model Estimate {
+  id          String   @id @default(cuid())
+  projectId   String?  @map("project_id")
+  userId      String   @map("user_id")
+  title       String
+  description String?
+  items       String   @default("[]") // JSON stored as string
+  subtotal    Float
+  taxRate     Float    @default(0.0875) @map("tax_rate")
+  taxAmount   Float    @map("tax_amount")
+  total       Float
+  status      String   @default("DRAFT")
+  validUntil  DateTime? @map("valid_until")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+  @@map("estimates")
+}
+
+// Media model for gallery
+model Media {
+  id            String   @id @default(cuid())
+  userId        String?  @map("user_id")
+  projectId     String?  @map("project_id")
+  type          String
+  url           String
+  thumbnailUrl  String?  @map("thumbnail_url")
+  title         String
+  description   String?
+  category      String?
+  isPublic      Int      @default(0) @map("is_public") // Boolean as Int for SQLite
+  isProtected   Int      @default(1) @map("is_protected") // Boolean as Int for SQLite
+  metadata      String?  // JSON stored as string
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([isPublic])
+  @@map("media")
+}
+
+// Notifications model
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  type       String
+  title      String
+  message    String
+  actionUrl  String?  @map("action_url")
+  actionText String?  @map("action_text")
+  isRead     Int      @default(0) @map("is_read") // Boolean as Int for SQLite
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// Activity log for auditing
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   String?  // JSON stored as string
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("activity_log")
+}

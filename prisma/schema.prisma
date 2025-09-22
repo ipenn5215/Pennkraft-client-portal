@@ -1,0 +1,382 @@
+// This is your Prisma schema file for SQLite development
+// Use this for local development without Docker
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// User model - extends auth users
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String   // Hashed password
+  fullName    String   @map("full_name")
+  company     String?
+  phone       String?
+  role        String   @default("CUSTOMER")
+  avatar      String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  projects      Project[]
+  estimates     Estimate[]
+  media         Media[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+  documents     Document[]
+  messages      Message[]
+  quotes        Quote[]
+  invoices      Invoice[]
+  changeOrders  ChangeOrder[]
+  teamMembers   TeamMember[]
+
+  @@map("users")
+}
+
+// Projects model
+model Project {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  title          String
+  description    String?
+  type           String
+  status         String   @default("PENDING")
+  progress       Int      @default(0)
+  estimatedValue Float?   @map("estimated_value")
+  actualValue    Float?   @map("actual_value")
+  startDate      DateTime? @map("start_date")
+  endDate        DateTime? @map("end_date")
+  dueDate        DateTime? @map("due_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  estimates    Estimate[]
+  media        Media[]
+  documents    Document[]
+  messages     Message[]
+  milestones   Milestone[]
+  quotes       Quote[]
+  invoices     Invoice[]
+  changeOrders ChangeOrder[]
+  teamMembers  TeamMember[]
+  activities   Activity[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("projects")
+}
+
+// Estimates model
+model Estimate {
+  id          String   @id @default(cuid())
+  projectId   String?  @map("project_id")
+  userId      String   @map("user_id")
+  title       String
+  description String?
+  items       String   @default("[]") // JSON stored as string
+  subtotal    Float
+  taxRate     Float    @default(0.0875) @map("tax_rate")
+  taxAmount   Float    @map("tax_amount")
+  total       Float
+  status      String   @default("DRAFT")
+  validUntil  DateTime? @map("valid_until")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+  @@map("estimates")
+}
+
+// Media model for gallery
+model Media {
+  id            String   @id @default(cuid())
+  userId        String?  @map("user_id")
+  projectId     String?  @map("project_id")
+  type          String
+  url           String
+  thumbnailUrl  String?  @map("thumbnail_url")
+  title         String
+  description   String?
+  category      String?
+  isPublic      Int      @default(0) @map("is_public") // Boolean as Int for SQLite
+  isProtected   Int      @default(1) @map("is_protected") // Boolean as Int for SQLite
+  metadata      String?  // JSON stored as string
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([isPublic])
+  @@map("media")
+}
+
+// Notifications model
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  type       String
+  title      String
+  message    String
+  actionUrl  String?  @map("action_url")
+  actionText String?  @map("action_text")
+  isRead     Int      @default(0) @map("is_read") // Boolean as Int for SQLite
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// Activity log for auditing
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   String?  // JSON stored as string
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("activity_log")
+}
+
+// Document model for bidirectional file uploads
+model Document {
+  id          String   @id @default(cuid())
+  projectId   String   @map("project_id")
+  userId      String   @map("user_id")
+  name        String
+  url         String
+  size        Int
+  type        String
+  category    String   // 'client-upload' | 'deliverable'
+  status      String   @default("pending") // pending, reviewed, approved, rejected
+  description String?
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+  reviewedAt  DateTime? @map("reviewed_at")
+  reviewedBy  String?  @map("reviewed_by")
+  metadata    String?  // JSON stored as string
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([category])
+  @@index([status])
+  @@map("documents")
+}
+
+// Message model for project communication
+model Message {
+  id           String   @id @default(cuid())
+  projectId    String   @map("project_id")
+  userId       String   @map("user_id")
+  content      String
+  isRead       Int      @default(0) @map("is_read") // Boolean as Int for SQLite
+  priority     String   @default("normal") // normal, high, urgent
+  attachments  String?  // JSON stored as string
+  emailSent    Int      @default(0) @map("email_sent") // Boolean as Int for SQLite
+  parentId     String?  @map("parent_id") // For threaded conversations
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([isRead])
+  @@map("messages")
+}
+
+// Quote model for billing system
+model Quote {
+  id           String    @id @default(cuid())
+  projectId    String?   @map("project_id")
+  userId       String    @map("user_id")
+  quoteNumber  String    @unique @map("quote_number")
+  items        String    // JSON stored as string (line items)
+  subtotal     Float
+  taxRate      Float     @default(0.0875) @map("tax_rate")
+  taxAmount    Float     @map("tax_amount")
+  discount     Float     @default(0)
+  total        Float
+  status       String    @default("draft") // draft, sent, accepted, rejected, converted
+  validUntil   DateTime? @map("valid_until")
+  acceptedAt   DateTime? @map("accepted_at")
+  convertedAt  DateTime? @map("converted_at")
+  invoiceId    String?   @map("invoice_id") // Link to converted invoice
+  notes        String?
+  terms        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+  @@index([quoteNumber])
+  @@map("quotes")
+}
+
+// Invoice model for billing system
+model Invoice {
+  id            String    @id @default(cuid())
+  projectId     String?   @map("project_id")
+  userId        String    @map("user_id")
+  invoiceNumber String    @unique @map("invoice_number")
+  quoteId       String?   @map("quote_id") // Source quote if converted
+  items         String    // JSON stored as string (line items)
+  subtotal      Float
+  taxRate       Float     @default(0.0875) @map("tax_rate")
+  taxAmount     Float     @map("tax_amount")
+  discount      Float     @default(0)
+  total         Float
+  status        String    @default("draft") // draft, sent, paid, overdue, cancelled
+  dueDate       DateTime? @map("due_date")
+  paidAt        DateTime? @map("paid_at")
+  paymentMethod String?   @map("payment_method")
+  stripeId      String?   @map("stripe_id") // Stripe payment intent ID
+  notes         String?
+  terms         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  changeOrders ChangeOrder[]
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+  @@index([invoiceNumber])
+  @@index([stripeId])
+  @@map("invoices")
+}
+
+// Change Order model for additional work
+model ChangeOrder {
+  id            String    @id @default(cuid())
+  projectId     String    @map("project_id")
+  invoiceId     String    @map("invoice_id")
+  userId        String    @map("user_id")
+  orderNumber   String    @unique @map("order_number")
+  description   String
+  items         String    // JSON stored as string (line items)
+  amount        Float
+  status        String    @default("pending") // pending, approved, rejected, completed
+  approvedBy    String?   @map("approved_by")
+  approvedAt    DateTime? @map("approved_at")
+  completedAt   DateTime? @map("completed_at")
+  notes         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([invoiceId])
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+  @@map("change_orders")
+}
+
+// Milestone model for project tracking
+model Milestone {
+  id          String    @id @default(cuid())
+  projectId   String    @map("project_id")
+  title       String
+  description String?
+  status      String    @default("pending") // pending, active, completed
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
+  @@map("milestones")
+}
+
+// Team Member model for project assignments
+model TeamMember {
+  id        String   @id @default(cuid())
+  projectId String   @map("project_id")
+  userId    String   @map("user_id")
+  role      String   // Project Manager, Estimator, etc.
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+// Activity model for project activity logs
+model Activity {
+  id        String   @id @default(cuid())
+  projectId String   @map("project_id")
+  userId    String   @map("user_id")
+  type      String   // document_upload, milestone_complete, message_sent, etc.
+  title     String
+  details   String?
+  metadata  String?  // JSON stored as string
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@map("activities")
+}
